@@ -63,10 +63,10 @@
 				<tr>
 					<td align="right">状态：</td>
 					<td><font color="blue"><asp:CheckBox id="cb1" Runat="server" Text="已移库"></asp:CheckBox>
-                    &nbsp;<asp:CheckBox id="cb2" Runat="server" Text="已报关"></asp:CheckBox>
-                    &nbsp;<asp:CheckBox id="cb3" Runat="server" Text="已提交海关"></asp:CheckBox>
-                    &nbsp;<asp:CheckBox id="cb4" Runat="server" Text="已放行"></asp:CheckBox>
-                    &nbsp;<asp:CheckBox id="cb5" Runat="server" Text="已移库"></asp:CheckBox></font></td>
+                    &nbsp;<asp:CheckBox id="cb2" Runat="server" Text="已报关" Enabled="False"></asp:CheckBox>
+                    &nbsp;<asp:CheckBox id="cb3" Runat="server" Text="已提交海关" Enabled="False"></asp:CheckBox>
+                    &nbsp;<asp:CheckBox id="cb4" Runat="server" Text="已放行" Enabled="False"></asp:CheckBox>
+                    &nbsp;<asp:CheckBox id="cb5" Runat="server" Text="已移库" Enabled="False"></asp:CheckBox></font></td>
                     <td colspan="2"><asp:button id="btnBGD" runat="server" Text="生成报关单" onclick="btnBGD_Click"></asp:button>
                         <asp:button id="Button1" runat="server" Text="一键删除文件" onclick="Button1_Click"></asp:button></td>
 				</tr>
@@ -77,6 +77,12 @@
                     <asp:button id="btnSave" runat="server" Text="保存" onclick="btnSave_Click"></asp:button>
                     </td>
 				</tr>
+                <tr>
+                <td align="right"><font color="blue">承诺事项：</font></td>
+					<td><font color="blue"><asp:CheckBox id="PI_SPECIAL" Runat="server" Text="特殊关系确认"></asp:CheckBox>
+                    <asp:CheckBox id="PI_PRICE" Runat="server" Text="价格影响确认"></asp:CheckBox>
+                    <asp:CheckBox id="PI_PAY" Runat="server" Text="支付特许确认"></asp:CheckBox></font></td>
+                </tr>
 			</table>
             <div style="margin:0 auto;width:750px;">
                 <fieldset style="WIDTH: 600px"><legend>待放行清单格式</legend>
