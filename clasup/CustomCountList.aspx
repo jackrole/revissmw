@@ -13,6 +13,7 @@
             margin: 0 auto;
             border-collapse: collapse;
             border-spacing: 10px;
+            width: 100%;
         }
         th {
             text-align: center;
@@ -36,6 +37,19 @@
         td:last-child {
             padding-right: 3px;
             border-right: 1px solid #ccc;
+        }
+        ul {
+            margin: 20px auto;
+            list-style: none;
+        }
+        li {
+            display: inline-block;
+            margin: 0 5px;
+        }
+        li span  {
+            display: block;
+            padding: 3px 8px;
+            border: 1px solid #ccc;
         }
     </style>
 </head>

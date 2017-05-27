@@ -18,8 +18,11 @@ namespace Export.Clasup
     class SuperTable
     {
       int _maxCols = 0;
+      string _klassString = "";
       List<string> _head = new List<string>();
       List<List<string>> _cellMatrix = new List<List<string>>();
+
+      public bool HasContent { get { return _cellMatrix.Count > 0; } }
 
       public SuperTable()
       {
@@ -29,6 +32,11 @@ namespace Export.Clasup
       public SuperTable(int maxCols)
       {
         _maxCols = maxCols;
+      }
+
+      public SuperTable(string klass)
+      {
+        _klassString = " class=\"" + klass + "\"";
       }
 
       public void AddHead(string head, string spliter = ",")
@@ -108,8 +116,8 @@ namespace Export.Clasup
         var bodyString = string.Join("", _cellMatrix.ConvertAll(x => RowStr(x)).ToArray());
 
         return string.Format(
-          "<table><thead>{0}</thead><tbody>{1}</tbody></table>",
-          headString, bodyString
+          "<table{2}><thead>{0}</thead><tbody>{1}</tbody></table>",
+          headString, bodyString, _klassString
         );
       }
     }
@@ -119,15 +127,34 @@ namespace Export.Clasup
       var superTable = new SuperTable();
       var dataView = g.getTable(sqlTemplate.FormatSql(passId, countryID)).DefaultView;
 
-      for (int i = 0; i < dataView.Count; i++)
+      int startIndex;
+      int pageIndex;
+      if (int.TryParse(page, out startIndex))
       {
+        pageIndex = startIndex;
+        startIndex = (startIndex - 1) * pageCapacity;
+        if (startIndex < 0)
+        {
+          pageIndex = 1;
+          startIndex = 0;
+        }
+      }
+      else
+      {
+        pageIndex = 1;
+        startIndex = 0;
+      }
+
+      for (int i = startIndex; i < startIndex + pageCapacity; i++)
+      {
+        if (i >= dataView.Count) break;
         Func<string, string> row = x => dataView[i][x].ToString();
         var cells = new List<string>();
 
         cells.Add((i + 1).ToString());
         cells.Add(row("CODE_T") + row("CODE_S"));
         cells.Add(row("G_NAME"));
-        cells.Add(row("QTY_CONV") + getName("unit", row("UNIT_1")));  // 数量及单位   dv0[i]["qty_conv"], getName("unit", dv0[i]["unit_1"))
+        cells.Add(row("QTY_CONV") + getName("unit", row("UNIT_1")));
         cells.Add(row("ORIGIN_NAME"));
         cells.Add(row("CURRENCY"));
 
@@ -139,7 +166,7 @@ namespace Export.Clasup
         cells.Add(row("CONTR_ITEM"));
         cells.Add("");
         cells.Add(row("G_MODEL"));
-        cells.Add(row("QTY_2") + getName("unit", row("UNIT_2")));  // 数量及单位   dv0[i]["qty_2"], getName("unit", dv0[i]["unit_2"))
+        cells.Add(row("QTY_2") + getName("unit", row("UNIT_2")));
         cells.Add(row("ORIGIN"));
         cells.Add(row("CURRENCY_NAME"));
         superTable.AddRow(cells.ToArray());
@@ -148,12 +175,28 @@ namespace Export.Clasup
         cells.Add("");
         cells.Add("");
         cells.Add("");
-        cells.Add(row("QTY_1") + getName("unit", row("G_UNIT")));  // 数量及单位   dv0[i]["qty_1"], getName("unit", dv0[i]["g_unit"))
+        cells.Add(row("QTY_1") + getName("unit", row("G_UNIT")));
         superTable.AddRow(cells.ToArray());
       }
       
       superTable.AddHead("项号,商品编号,商品名称、规格型号,数量及单位,原产国（地区）,币制,征免");
       passList.Text = superTable.ToTableString();
+
+      if (superTable.HasContent)
+      {
+        List<string> pageIndexes = new List<string>();
+        for (int i = 1; i <= Math.Ceiling((float)dataView.Count / pageCapacity); i++)
+        {
+          if (i == pageIndex)
+            pageIndexes.Add("<li><span>" + i.ToString() + "</span></li>");
+          else
+            pageIndexes.Add(string.Format(
+              "<li><a href='?passid={0}&page={1}'><span>{1}</span></a></li>",
+              passId, i.ToString()
+            ));
+        }
+        passList.Text += "<ul>" + string.Join("", pageIndexes.ToArray()) + "</ul>";
+      }
     }
 
     public string getCurr(string name)
@@ -286,6 +329,7 @@ namespace Export.Clasup
     protected string connOLE = g.getConfig("ConnectStringOle");
 
     private string countryID = "142";
+    private int pageCapacity = 20;
 
     private SQLTemplate sqlTemplate = SQLTemplate.New(
         "SELECT L.*",
