@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -11,16 +11,149 @@ namespace Export.Clasup
   {
     protected void Page_Load(object sender, EventArgs e)
     {
-      DrawList(g.GetRequest("passid"));
+      // var passid = "1507130008"
+      DrawList(g.GetRequest("passid"), g.GetRequest("page"));
     }
 
-    private void DrawList(string passId)
+    class SuperTable
     {
-      gList.DataSource = g.getTable("select *, passid code from [clasup_passdetail]");
-      gList.DataBind();
-      if (passId == "") return;
+      int _maxCols = 0;
+      List<string> _head = new List<string>();
+      List<List<string>> _cellMatrix = new List<List<string>>();
 
+      public SuperTable()
+      {
+        _maxCols = 0;
+      }
 
+      public SuperTable(int maxCols)
+      {
+        _maxCols = maxCols;
+      }
+
+      public void AddHead(string head, string spliter = ",")
+      {
+        AddHead(SplitLineString(head, spliter).ToArray());
+      }
+
+      public void AddHead(params string[] colNames)
+      {
+        _head.Clear();
+        foreach (var colName in colNames)
+        {
+          _head.Add(colName);
+        }
+      }
+
+      public void AddRow(string cellsString, string spliter = ",")
+      {
+        AddRow(SplitLineString(cellsString, spliter).ToArray());
+      }
+
+      public void AddRow(params string[] cells)
+      {
+        var row = new List<string>();
+        foreach (var cell in cells)
+        {
+          row.Add(cell);
+        }
+        _cellMatrix.Add(row);
+      }
+
+      private List<string> SplitLineString(string colNames, string spliter = ",")
+      {
+        return new List<string>(Regex.Split(colNames, spliter));
+      }
+
+      private string HeadStr(string colNames, string spliter = ",")
+      {
+        return HeadStr(SplitLineString(colNames, spliter));
+      }
+
+      private string HeadStr(List<string> colNames)
+      {
+        return "<tr>" + string.Join("", colNames.ConvertAll(x => "<th>" + x.Trim() + "</th>").ToArray()) + "</tr>";
+      }
+
+      private string RowStr(string cellValues, string spliter = ",")
+      {
+        return RowStr(SplitLineString(cellValues, spliter));
+      }
+
+      private string RowStr(List<string> cellValues)
+      {
+        return "<tr>" + string.Join("", cellValues.ConvertAll(x => "<td>" + x + "</td>").ToArray()) + "</tr>";
+      }
+
+      public string ToTableString()
+      {
+        int maxCols;
+        if (_maxCols == 0)
+        {
+          var wholeMatrix = (new List<List<string>>(_cellMatrix) { _head }).ConvertAll(x => x.Count);
+          wholeMatrix.Sort();
+          maxCols = wholeMatrix[wholeMatrix.Count - 1];
+        }
+        else
+        {
+          maxCols = _maxCols;
+        }
+
+        Action<List<string>> converter = x => { if (x.Count < maxCols) x.AddRange(new string[maxCols - x.Count]); };
+
+        converter(_head);
+        _cellMatrix.ForEach(x => converter(x));
+
+        var headString = HeadStr(_head);
+        var bodyString = string.Join("", _cellMatrix.ConvertAll(x => RowStr(x)).ToArray());
+
+        return string.Format(
+          "<table><thead>{0}</thead><tbody>{1}</tbody></table>",
+          headString, bodyString
+        );
+      }
+    }
+
+    private void DrawList(string passId, string page = "1")
+    {
+      var superTable = new SuperTable();
+      var dataView = g.getTable(sqlTemplate.FormatSql(passId, countryID)).DefaultView;
+
+      for (int i = 0; i < dataView.Count; i++)
+      {
+        Func<string, string> row = x => dataView[i][x].ToString();
+        var cells = new List<string>();
+
+        cells.Add((i + 1).ToString());
+        cells.Add(row("CODE_T") + row("CODE_S"));
+        cells.Add(row("G_NAME"));
+        cells.Add(row("QTY_CONV") + getName("unit", row("UNIT_1")));  // 数量及单位   dv0[i]["qty_conv"], getName("unit", dv0[i]["unit_1"))
+        cells.Add(row("ORIGIN_NAME"));
+        cells.Add(row("CURRENCY"));
+
+        //cells.Add(string.Format("{0:#.0000}", g.ToDecimal(row("decl_price"))));  // 单价
+        //cells.Add(string.Format("{0:#.00}", g.ToDecimal(row("trade_total"))));  // 总价
+        superTable.AddRow(cells.ToArray());
+        cells.Clear();
+
+        cells.Add(row("CONTR_ITEM"));
+        cells.Add("");
+        cells.Add(row("G_MODEL"));
+        cells.Add(row("QTY_2") + getName("unit", row("UNIT_2")));  // 数量及单位   dv0[i]["qty_2"], getName("unit", dv0[i]["unit_2"))
+        cells.Add(row("ORIGIN"));
+        cells.Add(row("CURRENCY_NAME"));
+        superTable.AddRow(cells.ToArray());
+        cells.Clear();
+
+        cells.Add("");
+        cells.Add("");
+        cells.Add("");
+        cells.Add(row("QTY_1") + getName("unit", row("G_UNIT")));  // 数量及单位   dv0[i]["qty_1"], getName("unit", dv0[i]["g_unit"))
+        superTable.AddRow(cells.ToArray());
+      }
+      
+      superTable.AddHead("项号,商品编号,商品名称、规格型号,数量及单位,原产国（地区）,币制,征免");
+      passList.Text = superTable.ToTableString();
     }
 
     public string getCurr(string name)
@@ -151,5 +284,16 @@ namespace Export.Clasup
 
     protected string connGS = "";
     protected string connOLE = g.getConfig("ConnectStringOle");
+
+    private string countryID = "142";
+
+    private SQLTemplate sqlTemplate = SQLTemplate.New(
+        "SELECT L.*",
+        ", {1S} AS ORIGIN",
+        ", DBO.F_ORIGIN0({1S}) AS ORIGIN_NAME",
+        ", DBO.F_CURR0(TRADE_CURR) AS CURRENCY",
+        ", DBO.F_CURR1(DBO.F_CURR0(TRADE_CURR)) AS CURRENCY_NAME",
+        " FROM FORM_HEAD AS H, FORM_LIST AS L WHERE H.PRE_ENTRY_ID = L.PRE_ENTRY_ID AND H.RKNO = {0S}"
+    );
   }
 }

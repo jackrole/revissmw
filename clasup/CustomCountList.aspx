@@ -5,72 +5,45 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
     <title></title>
+    <style type="text/css">
+        body {
+            text-align: center;
+        }
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+            border-spacing: 10px;
+        }
+        th {
+            text-align: center;
+        }
+        thead {
+            border: 1px solid #ccc;
+            border-top-width: 2px;
+        }
+        td {
+            padding: 0 20px;
+            text-align: left;
+        }
+        tr:nth-child(3n+0) td {
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        td:first-child {
+            padding-left: 3px;
+            border-left: 1px solid #ccc;
+        }
+        td:last-child {
+            padding-right: 3px;
+            border-right: 1px solid #ccc;
+        }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
-    <div>
-        <asp:DataGrid ID="gList" HorizontalAlign="Center" Runat="server" CssClass="prtTab"
-            BorderWidth="1" CellPadding="0" CellSpacing="0" BorderColor="#000000" AutoGenerateColumns="False">
-            <headerstyle cssclass="gtop"></headerstyle>
-            <itemstyle cssclass="gbody"></itemstyle>
-            <columns>
-				<asp:TemplateColumn HeaderText="项号">
-					<ItemTemplate>
-						<%# Eval("code")%>
-						<br />
-						<%# Eval("code")%>
-					</ItemTemplate>
-				</asp:TemplateColumn>
-				<asp:TemplateColumn HeaderText="商品编号">
-					<ItemTemplate>
-						<%# Eval("code")%>
-						<%# Eval("code")%>
-					</ItemTemplate>
-				</asp:TemplateColumn>
-				<asp:TemplateColumn HeaderText="商品名称、规格型号">
-					<ItemTemplate>
-						<%# Eval("code")%>
-						<br />
-						<%# Eval("code")%>
-					</ItemTemplate>
-				</asp:TemplateColumn>
-				<asp:TemplateColumn HeaderText="数量及单位">
-					<ItemTemplate>
-						<%# Eval("code")%><%# Eval("code")%>
-						<%# getName("unit", (string)Eval("code"))%>
-						<br />
-						<%# Eval("code")%><%# Eval("code")%>
-						<%# getName("unit", (string)Eval("code"))%>
-						<br />
-						<%# Eval("code")%><%# Eval("code")%>
-						<%# getName("unit", (string)Eval("code"))%>
-					</ItemTemplate>
-				</asp:TemplateColumn>
-				<asp:TemplateColumn HeaderText="原产国（地区）">
-					<ItemTemplate>
-						<%#getName("origin_country", (string)Eval("code"))%>
-						<br />
-						<%# Eval("code")%>
-					</ItemTemplate>
-				</asp:TemplateColumn>
-				<%--<asp:BoundColumn DataField="decl_price" DataFormatString="{0:#.0000}" HeaderText="单价"></asp:BoundColumn>--%>
-				<%--<asp:BoundColumn DataField="trade_total" DataFormatString="{0:F}" HeaderText="总价"></asp:BoundColumn>--%>
-				<asp:TemplateColumn HeaderText="币制">
-					<ItemTemplate>
-						<%# getCurr((string)Eval("code"))%>
-						<br />
-						<%# getName("trade_curr", (string)Eval("code"))%>
-					</ItemTemplate>
-				</asp:TemplateColumn>
-				<asp:TemplateColumn HeaderText="征免">
-					<ItemTemplate>
-						<%# getName("duty_mode", (string)Eval("code"))%>
-						<br />
-					</ItemTemplate>
-				</asp:TemplateColumn>
-			</columns>
-        </asp:DataGrid>
-    </div>
+        <div>
+            <asp:Literal ID="passList" runat="server" />
+        </div>
     </form>
 </body>
 </html>
